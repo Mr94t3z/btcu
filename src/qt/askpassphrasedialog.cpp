@@ -184,7 +184,7 @@ void AskPassphraseDialog::accept()
         hide();
         if (!CheckPassphraseRestriction(newpass1.c_str()) || !CheckPassphraseRestriction(newpass1.c_str())) {
             QMessageBox::critical(this, tr("Wallet encryption failed"),
-                                  tr("Error: passphrase not secure. Passphrase should contain: Upper case, lower case, number, special char and length not less then 8"));
+                                  tr("Error: passphrase not secure. Passphrase should contain: Upper case, lower case, number, special char and length not less than 8 symbols"));
             break;
         }
         bool ret = openStandardDialog(

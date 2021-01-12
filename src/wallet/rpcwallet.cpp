@@ -3602,7 +3602,7 @@ UniValue encryptwallet(const UniValue& params, bool fHelp)
             "Encrypts the wallet with <passphrase>.");
 
     if(!CheckPassphraseRestriction(strWalletPass.c_str()))
-        throw JSONRPCError(RPC_WALLET_PASSPHRASE_NOT_SECURE, "Error: passphrase not secure. Passphrase should contain: Upper case, lower case, number, special char and length not less then 8 symbols");
+        throw JSONRPCError(RPC_WALLET_PASSPHRASE_NOT_SECURE, "Error: passphrase not secure. Passphrase should contain: Upper case, lower case, number, special char and length not less than 8 symbols");
 
     if (!pwalletMain->EncryptWallet(strWalletPass))
         throw JSONRPCError(RPC_WALLET_ENCRYPTION_FAILED, "Error: Failed to encrypt the wallet.");
