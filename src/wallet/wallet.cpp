@@ -600,7 +600,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
 {
     if (IsCrypted())
         return false;
-    if(CheckPassphraseRestriction(strWalletPassphrase.c_str()))
+    if(!CheckPassphraseRestriction(strWalletPassphrase.c_str()))
         return false;
 
     CKeyingMaterial vMasterKey;
