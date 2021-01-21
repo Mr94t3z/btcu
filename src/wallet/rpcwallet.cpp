@@ -1922,7 +1922,7 @@ UniValue signmessage(const UniValue& params, bool fHelp)
 
     LOCK2(cs_main, pwalletMain->cs_wallet);
 
-    if (!pwalletMain->IsCrypted())
+    if (!pwalletMain->IsCrypted()  && !Params().IsRegTestNet())
         throw JSONRPCError(RPC_WALLET_WRONG_ENC_STATE, "Error: running with an not encrypted wallet. Run encryptwallet first");
 
     EnsureWalletIsUnlocked();
