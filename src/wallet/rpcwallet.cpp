@@ -5452,20 +5452,3 @@ UniValue spendrawzerocoin(const UniValue& params, bool fHelp)
     return DoZbtcuSpend(mint.GetDenominationAsAmount(), vMintsSelected, address_str);
 }
 
-UniValue runupdate(const UniValue& params, bool fHelp) {
-    if (fHelp || params.size() != 0)
-        throw std::runtime_error(
-                "runupdate\n"
-                "\nThe current state of the mintpool of the deterministic zBTCU wallet.\n" +
-                HelpRequiringPassphrase() + "\n"
-
-                                            "\nExamples\n" +
-                HelpExampleCli("mintpoolstatus", "") + HelpExampleRpc("mintpoolstatus", ""));
-
-
-    printf("run update\n");
-    CheckUpdates();
-    // https://raw.githubusercontent.com/bitcoin-ultimatum/btcu/master/src/clientversion.h
-    UniValue obj(UniValue::VOBJ);
-    return obj;
-}
