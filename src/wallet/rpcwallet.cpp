@@ -1922,6 +1922,9 @@ UniValue signmessage(const UniValue& params, bool fHelp)
 
     LOCK2(cs_main, pwalletMain->cs_wallet);
 
+    if (!pwalletMain->IsCrypted())
+        throw JSONRPCError(RPC_WALLET_WRONG_ENC_STATE, "Error: running with an not encrypted wallet. Run encryptwallet first");
+
     EnsureWalletIsUnlocked();
 
     std::string strAddress = params[0].get_str();
@@ -3588,7 +3591,6 @@ UniValue encryptwallet(const UniValue& params, bool fHelp)
         return true;
     if (pwalletMain->IsCrypted())
         throw JSONRPCError(RPC_WALLET_WRONG_ENC_STATE, "Error: running with an encrypted wallet, but encryptwallet was called.");
-
 
     // TODO: get rid of this .c_str() by implementing SecureString::operator=(std::string)
     // Alternately, find a way to make params[0] mlock()'d to begin with.
@@ -5450,3 +5452,20 @@ UniValue spendrawzerocoin(const UniValue& params, bool fHelp)
     return DoZbtcuSpend(mint.GetDenominationAsAmount(), vMintsSelected, address_str);
 }
 
+UniValue runupdate(const UniValue& params, bool fHelp) {
+    if (fHelp || params.size() != 0)
+        throw std::runtime_error(
+                "runupdate\n"
+                "\nThe current state of the mintpool of the deterministic zBTCU wallet.\n" +
+                HelpRequiringPassphrase() + "\n"
+
+                                            "\nExamples\n" +
+                HelpExampleCli("mintpoolstatus", "") + HelpExampleRpc("mintpoolstatus", ""));
+
+
+    printf("run update\n");
+    CheckUpdates();
+    // https://raw.githubusercontent.com/bitcoin-ultimatum/btcu/master/src/clientversion.h
+    UniValue obj(UniValue::VOBJ);
+    return obj;
+}
