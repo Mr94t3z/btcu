@@ -367,8 +367,6 @@ bool WalletModel::updateAddressBookLabels(const CTxDestination& dest, const std:
         return wallet->SetAddressBook(dest, strName, strPurpose);
     } else if (mi->second.name != strName) {
         return wallet->SetAddressBook(dest, strName, ""); // "" means don't change purpose
-    }else if (mi->second.name == strName) {
-       return wallet->SetAddressBook(dest, strName, "");
     }
     return false;
 }

@@ -31,18 +31,13 @@
 
 #include "util.h"
 
-#define BASE_WINDOW_WIDTH 1350
-#define BASE_WINDOW_HEIGHT 800
-#define BASE_WINDOW_MIN_HEIGHT 750
-#define BASE_WINDOW_MIN_WIDTH 1350
+#define BASE_WINDOW_WIDTH 1200
+#define BASE_WINDOW_HEIGHT 740
+#define BASE_WINDOW_MIN_HEIGHT 620
+#define BASE_WINDOW_MIN_WIDTH 1100
 
-#if defined(Q_OS_MAC)
-
-void ForceActivation();
-#endif
 
 const QString BTCUGUI::DEFAULT_WALLET = "~Default";
-static QProgressDialog* pProgressDialog = nullptr;
 
 BTCUGUI::BTCUGUI(const NetworkStyle* networkStyle, QWidget* parent) :
         QMainWindow(parent),
@@ -51,6 +46,7 @@ BTCUGUI::BTCUGUI(const NetworkStyle* networkStyle, QWidget* parent) :
     /* Open CSS when configured */
     this->setStyleSheet(GUIUtil::loadStyleSheet());
     this->setMinimumSize(BASE_WINDOW_MIN_WIDTH, BASE_WINDOW_MIN_HEIGHT);
+
 
     // Adapt screen size
     QRect rec = QApplication::desktop()->screenGeometry();
@@ -96,8 +92,8 @@ BTCUGUI::BTCUGUI(const NetworkStyle* networkStyle, QWidget* parent) :
         centralWidgetLayouot->setContentsMargins(0,0,0,0);
         centralWidgetLayouot->setSpacing(0);
 
+        centralWidget->setProperty("cssClass", "container");
         centralWidget->setStyleSheet("padding:0px; border:none; margin:0px;");
-        centralWidget->setProperty("cssClass", "container-border");
 
         // First the nav
         navMenu = new NavMenuWidget(this);
@@ -111,7 +107,7 @@ BTCUGUI::BTCUGUI(const NetworkStyle* networkStyle, QWidget* parent) :
         centralWidgetLayouot->addWidget(container);
 
         // Then topbar + the stackedWidget
-        auto *baseScreensContainer = new QVBoxLayout(this);
+        QVBoxLayout *baseScreensContainer = new QVBoxLayout(this);
         baseScreensContainer->setMargin(0);
         baseScreensContainer->setSpacing(0);
         baseScreensContainer->setContentsMargins(0,0,0,0);
@@ -126,7 +122,7 @@ BTCUGUI::BTCUGUI(const NetworkStyle* networkStyle, QWidget* parent) :
         stackedContainer = new QStackedWidget(this);
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         stackedContainer->setSizePolicy(sizePolicy);
-        stackedContainer->setContentsMargins(10,0,10,10);
+        stackedContainer->setContentsMargins(0,0,0,0);
         baseScreensContainer->addWidget(stackedContainer);
 
         // Init
@@ -139,9 +135,6 @@ BTCUGUI::BTCUGUI(const NetworkStyle* networkStyle, QWidget* parent) :
         coldStakingWidget = new ColdStakingWidget(this);
         leasingWidget.reset(new LeasingWidget(this));
         settingsWidget = new SettingsWidget(this);
-        //createMasterNode= new CreateMasterNodeWidget(this);
-        //createValidator = new CreateValidatorWidget(this);
-        LeasingStatistics = new LeasingStatisticsWidget(this);
 
         // Add to parent
         stackedContainer->addWidget(dashboard);
@@ -153,9 +146,6 @@ BTCUGUI::BTCUGUI(const NetworkStyle* networkStyle, QWidget* parent) :
         stackedContainer->addWidget(coldStakingWidget);
         stackedContainer->addWidget(leasingWidget.get());
         stackedContainer->addWidget(settingsWidget);
-        //stackedContainer->addWidget(createMasterNode);
-        //stackedContainer->addWidget(createValidator);
-        stackedContainer->addWidget(LeasingStatistics);
         stackedContainer->setCurrentWidget(dashboard);
 
     } else
@@ -183,9 +173,6 @@ BTCUGUI::BTCUGUI(const NetworkStyle* networkStyle, QWidget* parent) :
     // Subscribe to notifications from core
     subscribeToCoreSignals();
 
-#ifdef Q_OS_MAC
-    m_app_nap_inhibitor = new CAppNapInhibitor;
-#endif
 }
 
 void BTCUGUI::createActions(const NetworkStyle* networkStyle){
@@ -251,7 +238,6 @@ BTCUGUI::~BTCUGUI() {
     if (trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
         trayIcon->hide();
 #ifdef Q_OS_MAC
-    delete m_app_nap_inhibitor;
     MacDockIconHandler::cleanup();
 #endif
 }
@@ -329,11 +315,6 @@ void BTCUGUI::createTrayIconMenu() {
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 #endif
-
-// TODO: Disabling macOS App Nap on initial sync, disk and reindex operations.
-#ifdef Q_OS_MAC
-    m_app_nap_inhibitor->enableAppNap();
-#endif
 }
 
 #ifndef Q_OS_MAC
@@ -378,17 +359,8 @@ void BTCUGUI::closeEvent(QCloseEvent* event)
 void BTCUGUI::messageInfo(const QString& text){
     if(!this->snackBar) this->snackBar = new SnackBar(this, this);
     this->snackBar->setText(text);
-    this->snackBar->resize(snackBar->width(), snackBar->height());
-    openDialogDropRight(this->snackBar, this);
-}
-
-void BTCUGUI::messageInfo(const QString& text, int Type)
-{
-   if(!this->snackBar) this->snackBar = new SnackBar(this, this);
-   this->snackBar->setText(text);
-   this->snackBar->setType(Type);
-   this->snackBar->resize(snackBar->width(), snackBar->height());
-   openDialogDropRight(this->snackBar, this);
+    this->snackBar->resize(this->width(), snackBar->height());
+    openDialog(this->snackBar, this);
 }
 
 
@@ -440,8 +412,8 @@ void BTCUGUI::message(const QString& title, const QString& message, unsigned int
         }
         if (ret != NULL)
             *ret = r;
-    } else if(style & CClientUIInterface::MSG_INFORMATION_SNACK || style & CClientUIInterface::MSG_WARNING_SNACK || style & CClientUIInterface::MSG_ERROR_SNACK){
-        messageInfo(message, style);
+    } else if(style & CClientUIInterface::MSG_INFORMATION_SNACK){
+        messageInfo(message);
     }else {
         // Append title to "BTCU - "
         if (!msgType.isEmpty())
@@ -539,17 +511,6 @@ void BTCUGUI::goToSettings(){
 void BTCUGUI::goToReceive(){
     showTop(receiveWidget);
 }
-void BTCUGUI::goToCreateMasternode(){
-   //showTop(createMasterNode);
-}
-
-void BTCUGUI::goToCreateValidator(){
-   //showTop(createValidator);
-}
-
-void BTCUGUI::goToLeasingStatistics(){
-   showTop(LeasingStatistics);
-}
 
 void BTCUGUI::showTop(QWidget* view){
     if(stackedContainer->currentWidget() != view){
@@ -589,11 +550,6 @@ void BTCUGUI::showHide(bool show){
         op->setVisible(false);
         opEnabled = false;
     }else{
-        
-#ifdef Q_OS_MAC
-    ForceActivation();
-#endif
-
         QColor bg("#000000");
         bg.setAlpha(200);
         if(!isLightTheme()){
@@ -717,19 +673,18 @@ static bool ThreadSafeMessageBox(BTCUGUI* gui, const std::string& message, const
 #ifdef ENABLE_WALLET
 static void ShowProgress(const std::string& title, int nProgress)
 {
+    static QProgressDialog* pProgressDialog = nullptr;
 
-   if (!pProgressDialog)
-   {
-      pProgressDialog = new QProgressDialog(QString(title.c_str()), QString(), 0, 100);
-      pProgressDialog->setWindowModality(Qt::ApplicationModal);
-      pProgressDialog->setMinimumDuration(0);
-      pProgressDialog->setAutoClose(false);
-   }
     if (nProgress == 0) {
-       pProgressDialog->setValue(0);
-       pProgressDialog->setWindowTitle(QString(title.c_str()));
-       //TODO: need resolve why without this sleep progressbar was crashed
-       std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        if (!pProgressDialog) {
+            pProgressDialog = new QProgressDialog(QString(title.c_str()), QString(), 0, 100);
+            pProgressDialog->setWindowModality(Qt::ApplicationModal);
+            pProgressDialog->setMinimumDuration(0);
+            pProgressDialog->setAutoClose(false);
+            pProgressDialog->setValue(0);
+        } else
+            pProgressDialog->setWindowTitle(QString(title.c_str()));
+
     } else if (nProgress == 100) {
         if (pProgressDialog) {
             pProgressDialog->close();
@@ -737,12 +692,7 @@ static void ShowProgress(const std::string& title, int nProgress)
             pProgressDialog = nullptr;
         }
     } else if (pProgressDialog) {
-       if(pProgressDialog->value()!= nProgress)
-       {
-          pProgressDialog->setValue(nProgress);
-          //TODO: need resolve why without this sleep progressbar was crashed
-          std::this_thread::sleep_for(std::chrono::milliseconds(50));
-       }
+        pProgressDialog->setValue(nProgress);
     }
 }
 
