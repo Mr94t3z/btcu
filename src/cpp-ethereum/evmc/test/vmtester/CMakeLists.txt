@@ -4,6 +4,7 @@
 
 include(GNUInstallDirs)
 
+hunter_add_package(CLI11)
 find_package(CLI11)
 
 add_executable(evmc-vmtester vmtester.hpp vmtester.cpp tests.cpp)

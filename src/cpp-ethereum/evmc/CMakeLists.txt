@@ -2,7 +2,7 @@
 # Copyright 2019 The EVMC Authors.
 # Licensed under the Apache License, Version 2.0.
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.5)
 
 if(TARGET evmc)
     # The evmc library has been already created (probably by other submodule).
@@ -11,11 +11,21 @@ endif()
 
 option(EVMC_TESTING "Build EVMC tests and test tools" OFF)
 option(EVMC_EXAMPLES "Build EVMC examples" ${EVMC_TESTING})
+option(HUNTER_ENABLED "Enable Hunter package manager support" "${EVMC_TESTING}")
 
-include(${CMAKE_SOURCE_DIR}/cmake/cable/bootstrap.cmake)
-include(CableToolchains)
-include(CableBuildInfo)
+include(cmake/cable/bootstrap.cmake)
+include(CableBuildType)
 include(CableCompilerSettings)
+include(CableToolchains)
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
+if(EVMC_TESTING)
+    include(HunterGate)
+    include(HunterConfig)
+    include(defaults/HunterCacheServers)
+endif()
+
 cable_configure_toolchain(DEFAULT cxx11-pic)
 
 project(evmc)
